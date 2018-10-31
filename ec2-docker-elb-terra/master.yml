@@ -1,0 +1,28 @@
+- hosts: all
+  remote_user: ec2-user
+  become: true
+  become_method: sudo
+  gather_facts: False
+  tasks:
+    - name: Install HTTP
+      yum:
+        name: httpd
+        state: latest
+    - name: Enable EPEL
+      shell: yum-config-manager --enable rhui-REGION-rhel-server-extras
+    - name: Install Docker
+      yum: 
+        name: docker
+        state: latest
+    - name: Start Docker Service
+      service:
+        name: docker
+        state: started
+    - name: Create Nginx Container
+      shell: docker run --name docker-nginx -p 80:80 -d nginx
+    - name: Copy file from Ansible to EC2
+      copy:
+        src: /tmp/index.html
+        dest: /tmp/index.html
+    - name: Copy file from EC2 to Container
+      shell: docker cp /tmp/index.html docker-nginx:/usr/share/nginx/html/
